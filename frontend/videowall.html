@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project SENTINEL — Statewide CCTV Video Wall Matrix (GPIC-2026)</title>
+  
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/frontend/gujarat_police_logo.png">
+
+  <!-- Theme Engine & Auth Guard -->
+  <link rel="stylesheet" href="/frontend/theme.css">
+  <script src="/frontend/theme.js"></script>
+  <!-- Authentication Guard -->
+  <script src="/frontend/auth.js"></script>
+  <style>
+    * { transition: background-color 0.15s ease, border-color 0.15s ease; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #111827; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    .scanline {
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+      background-size: 100% 4px;
+    }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans overflow-hidden flex flex-col h-screen select-none">
+
+  <!-- TOP HEADER (Unified Navigation) -->
+  <header class="h-16 bg-gray-900 border-b border-gray-800 px-3 sm:px-6 flex items-center justify-between z-30 shadow-lg shrink-0 gap-2">
+    <div class="flex items-center space-x-3 shrink-0">
+      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg overflow-hidden flex items-center justify-center bg-white/10 p-1 border border-gray-700 shadow-md shrink-0">
+        <img src="/frontend/gujarat_police_logo.png" alt="Gujarat Police Logo" class="w-full h-full object-contain drop-shadow">
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <a href="/" class="font-bold text-sm sm:text-base md:text-lg tracking-wider text-white hover:text-indigo-300 transition">PROJECT SENTINEL</a>
+          <span class="bg-indigo-900/60 border border-indigo-500/50 text-indigo-300 text-[10px] sm:text-xs px-1.5 py-0.5 rounded font-mono">GPIC-2026</span>
+          <span class="bg-red-900/60 border border-red-500/50 text-red-300 text-[10px] px-1.5 py-0.5 rounded items-center flex">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping mr-1"></span> VIDEO WALL MATRIX
+          </span>
+        </div>
+        <p class="hidden 2xl:block text-[11px] text-gray-400 truncate">Multi-Camera Tactical Operations Center • Real-Time RTSP-over-TCP Grid</p>
+      </div>
+    </div>
+
+    <!-- Police Suite Portals Navigation -->
+    <nav class="hidden lg:flex items-center bg-gray-950/80 p-1 rounded-xl border border-gray-800 shadow-inner space-x-1 text-xs shrink min-w-0">
+      <a href="/" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="Live Statewide GIS Command Map">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <span class="hidden 2xl:inline">Command Map</span>
+      </a>
+      <a href="/gap-analysis" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="PostGIS Spatial Gap Analysis">
+        <i class="fa-solid fa-radar text-amber-400"></i>
+        <span class="hidden 2xl:inline">Gap Analysis</span>
+      </a>
+      <a href="/health-monitor" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="Camera Health NOC Diagnostics">
+        <i class="fa-solid fa-heart-pulse text-cyan-400"></i>
+        <span class="hidden 2xl:inline">Health NOC</span>
+      </a>
+      <a href="/videowall" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium shadow flex items-center space-x-1.5 transition shrink-0" title="High-Density CCTV Video Wall">
+        <i class="fa-solid fa-table-cells text-emerald-400"></i>
+        <span class="hidden 2xl:inline">Video Wall</span>
+      </a>
+      <a href="/forensics" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="Forensic Multi-Camera Search & Section 65B Dossier">
+        <i class="fa-solid fa-magnifying-glass-chart text-purple-400"></i>
+        <span class="hidden 2xl:inline">Forensics & 65B</span>
+      </a>
+      <a href="/docs" target="_blank" class="px-2 py-1.5 rounded-lg text-gray-500 hover:text-indigo-400 font-medium flex items-center space-x-1 transition shrink-0" title="OpenAPI Documentation">
+        <i class="fa-solid fa-book-open text-[11px]"></i>
+        <span class="hidden 2xl:inline">API</span>
+      </a>
+    </nav>
+
+    <!-- Wall Controls & Session -->
+    <div class="flex items-center space-x-1.5 sm:space-x-2 text-xs shrink-0 ml-auto pr-1 sm:pr-2">
+      <div class="bg-gray-800/80 rounded-lg p-1 border border-gray-700 flex items-center space-x-1">
+        <button id="btn-grid-4" class="px-2 py-1 rounded bg-indigo-600 text-white text-[11px] font-bold">2x2 Grid</button>
+        <button id="btn-grid-6" class="px-2 py-1 rounded text-gray-400 hover:text-white text-[11px] font-bold">3x2 Grid</button>
+      </div>
+      <button onclick="document.documentElement.requestFullscreen()" class="px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition" title="Full Screen Video Wall">
+        <i class="fa-solid fa-expand"></i>
+      </button>
+      <!-- Theme Switcher (Dark / Light Mode) -->
+      <button id="theme-toggle-btn" class="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-amber-300 border border-gray-700 transition flex items-center shadow" title="Toggle Dark / Light Mode">
+        <i id="theme-toggle-icon" class="fa-solid fa-sun text-xs"></i>
+      </button>
+      <!-- Dedicated Red Logout Button -->
+      <div class="flex items-center shrink-0 pl-1.5 border-l border-gray-800">
+        <a href="/login" class="logout-btn px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg transition flex items-center space-x-1.5 shrink-0 border border-red-500" title="Sign out of Sentinel">
+          <i class="fa-solid fa-power-off text-xs"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- VIDEO WALL GRID CONTAINER -->
+  <main class="flex-1 p-3 bg-gray-950 overflow-y-auto">
+    <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 h-full max-h-[calc(100vh-80px)]">
+      <!-- Generated dynamically -->
+    </div>
+  </main>
+
+  <script>
+    const DEFAULT_CAMERAS = [
+      { id: "CAM-AHM-SG-PAKWAN-04", name: "Pakwan Crossroad Junction", city: "Ahmedabad", dept: "POLICE", color: "#3b82f6", codec: "H.265 / 1080p", fps: 25 },
+      { id: "CAM-GNR-SEC18-01", name: "Police Bhawan Main Gate", city: "Gandhinagar", dept: "POLICE", color: "#3b82f6", codec: "H.264 / 1080p", fps: 25 },
+      { id: "CAM-AHM-ALPHAONE-14", name: "Vastrapur Lake Outer Circle", city: "Ahmedabad", dept: "POLICE", color: "#3b82f6", codec: "H.264 / 1080p", fps: 25 },
+      { id: "CAM-AHM-SG-ISCON-05", name: "Iscon Crossroad ANPR Hub", city: "Ahmedabad", dept: "POLICE", color: "#3b82f6", codec: "H.264 / 1080p", fps: 25 },
+      { id: "CAM-AHM-RTO-SUBHASH-11", name: "Subhash Bridge RTO Checkpoint", city: "Ahmedabad", dept: "RTO", color: "#f59e0b", codec: "H.265 / 4K", fps: 30 },
+      { id: "CAM-GNR-CH0-02", name: "CH-0 Circle Highway Entry", city: "Gandhinagar", dept: "POLICE", color: "#3b82f6", codec: "H.264 / 1080p", fps: 25 }
+    ];
+
+    let currentGridCount = 4;
+
+    function renderGrid(count) {
+      currentGridCount = count;
+      const grid = document.getElementById('video-grid');
+      grid.innerHTML = '';
+      
+      if (count === 4) {
+        grid.className = "grid grid-cols-1 md:grid-cols-2 gap-3 h-full max-h-[calc(100vh-80px)]";
+      } else {
+        grid.className = "grid grid-cols-1 md:grid-cols-3 gap-3 h-full max-h-[calc(100vh-80px)]";
+      }
+
+      const activeCams = DEFAULT_CAMERAS.slice(0, count);
+
+      activeCams.forEach((cam, idx) => {
+        const card = document.createElement('div');
+        card.className = "relative bg-black rounded-xl border border-gray-800 shadow-xl overflow-hidden flex flex-col";
+        card.innerHTML = `
+          <!-- Header Bar -->
+          <div class="px-3 py-1.5 bg-gray-900/90 border-b border-gray-800 flex items-center justify-between text-xs shrink-0 z-10">
+            <div class="flex items-center space-x-2 truncate">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="font-bold text-white font-mono">${cam.id}</span>
+              <span class="text-gray-400 text-[11px] truncate">${cam.name}</span>
+            </div>
+            <div class="flex items-center space-x-1.5 shrink-0">
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style="background:${cam.color}">${cam.dept}</span>
+              <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/60">TCP</span>
+            </div>
+          </div>
+
+          <!-- Video Simulation Canvas -->
+          <div class="relative flex-1 bg-black flex items-center justify-center overflow-hidden min-h-[200px]">
+            <canvas id="canvas-cam-${idx}" width="480" height="270" class="w-full h-full object-cover"></canvas>
+            <div class="absolute inset-0 scanline pointer-events-none opacity-40"></div>
+
+            <!-- Overlays -->
+            <div class="absolute top-2 left-2 flex items-center space-x-1.5 bg-black/75 px-2 py-0.5 rounded text-[10px] font-mono text-red-400 font-bold border border-red-800/40">
+              <i class="fa-solid fa-circle text-red-500 text-[6px] animate-pulse"></i>
+              <span>LIVE RTSP</span>
+            </div>
+
+            <div class="absolute bottom-2 left-2 bg-black/75 px-2 py-0.5 rounded text-[10px] font-mono text-gray-300 border border-gray-800">
+              ${cam.city} • ${cam.codec} • ${cam.fps} FPS
+            </div>
+
+            <div class="absolute bottom-2 right-2 bg-black/75 px-2 py-0.5 rounded text-[10px] font-mono text-cyan-300 border border-cyan-800/50" id="pts-cam-${idx}">
+              PTS: Syncing...
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+        startFeedSimulation(idx, cam);
+      });
+    }
+
+    const animIds = [];
+    function startFeedSimulation(idx, cam) {
+      const canvas = document.getElementById(`canvas-cam-${idx}`);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let x = -80 + (idx * 60);
+      let speed = 2.5 + (idx * 0.5);
+
+      function draw() {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, 480, 270);
+
+        // Road & Lane Markings
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, 110, 480, 100);
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([16, 12]);
+        ctx.beginPath();
+        ctx.moveTo(0, 160);
+        ctx.lineTo(480, 160);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Streetlamp / Junction marker
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(230, 80, 8, 30);
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(234, 76, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Moving Patrol/Civilian Vehicle
+        x += speed;
+        if (x > 500) x = -80;
+
+        ctx.fillStyle = idx % 2 === 0 ? '#1e40af' : '#dc2626';
+        ctx.fillRect(x, 135, 75, 32);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(x + 12, 126, 45, 12);
+
+        // Plate
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x + 60, 145, 14, 10);
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 6px monospace';
+        ctx.fillText('GJ', x + 61, 152);
+
+        // Update PTS
+        const ptsEl = document.getElementById(`pts-cam-${idx}`);
+        if (ptsEl) {
+          ptsEl.textContent = `PTS: ${Date.now()}ms`;
+        }
+
+        animIds[idx] = requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    document.getElementById('btn-grid-4').addEventListener('click', () => {
+      animIds.forEach(id => cancelAnimationFrame(id));
+      document.getElementById('btn-grid-4').className = 'px-2 py-1 rounded bg-indigo-600 text-white text-[11px] font-bold';
+      document.getElementById('btn-grid-6').className = 'px-2 py-1 rounded text-gray-400 hover:text-white text-[11px] font-bold';
+      renderGrid(4);
+    });
+
+    document.getElementById('btn-grid-6').addEventListener('click', () => {
+      animIds.forEach(id => cancelAnimationFrame(id));
+      document.getElementById('btn-grid-6').className = 'px-2 py-1 rounded bg-indigo-600 text-white text-[11px] font-bold';
+      document.getElementById('btn-grid-4').className = 'px-2 py-1 rounded text-gray-400 hover:text-white text-[11px] font-bold';
+      renderGrid(6);
+    });
+
+    // Initial render
+    renderGrid(4);
+  </script>
+</body>
+</html>

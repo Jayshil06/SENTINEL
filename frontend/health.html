@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project SENTINEL — Camera Network Health & CV Diagnostics NOC (GPIC-2026)</title>
+  
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/frontend/gujarat_police_logo.png">
+
+  <!-- Theme Engine & Auth Guard -->
+  <link rel="stylesheet" href="/frontend/theme.css">
+  <script src="/frontend/theme.js"></script>
+  <!-- Authentication Guard -->
+  <script src="/frontend/auth.js"></script>
+  
+  <style>
+    * { transition: background-color 0.15s ease, border-color 0.15s ease; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #111827; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans min-h-screen flex flex-col select-none">
+
+  <!-- TOP HEADER (Unified Navigation) -->
+  <header class="h-16 bg-gray-900 border-b border-gray-800 px-3 sm:px-6 flex items-center justify-between z-30 shadow-lg shrink-0 gap-2">
+    <div class="flex items-center space-x-3 shrink-0">
+      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg overflow-hidden flex items-center justify-center bg-white/10 p-1 border border-gray-700 shadow-md shrink-0">
+        <img src="/frontend/gujarat_police_logo.png" alt="Gujarat Police Logo" class="w-full h-full object-contain drop-shadow">
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <a href="/" class="font-bold text-sm sm:text-base md:text-lg tracking-wider text-white hover:text-indigo-300 transition">PROJECT SENTINEL</a>
+          <span class="bg-indigo-900/60 border border-indigo-500/50 text-indigo-300 text-[10px] sm:text-xs px-1.5 py-0.5 rounded font-mono">GPIC-2026</span>
+          <span class="bg-cyan-900/60 border border-cyan-500/50 text-cyan-300 text-[10px] px-1.5 py-0.5 rounded items-center flex">
+            <i class="fa-solid fa-heart-pulse text-[10px] mr-1"></i> NETWORK NOC
+          </span>
+        </div>
+        <p class="hidden 2xl:block text-[11px] text-gray-400 truncate">Computer Vision Automated Camera Health, Blur & Anti-Tamper Diagnostics</p>
+      </div>
+    </div>
+
+    <!-- Police Suite Portals Navigation -->
+    <nav class="hidden lg:flex items-center bg-gray-950/80 p-1 rounded-xl border border-gray-800 shadow-inner space-x-1 text-xs shrink min-w-0">
+      <a href="/" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="Live Statewide GIS Command Map">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <span class="hidden 2xl:inline">Command Map</span>
+      </a>
+      <a href="/gap-analysis" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="PostGIS Spatial Gap Analysis">
+        <i class="fa-solid fa-radar text-amber-400"></i>
+        <span class="hidden 2xl:inline">Gap Analysis</span>
+      </a>
+      <a href="/health-monitor" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium shadow flex items-center space-x-1.5 transition shrink-0" title="Camera Health NOC Diagnostics">
+        <i class="fa-solid fa-heart-pulse text-cyan-300"></i>
+        <span class="hidden 2xl:inline">Health NOC</span>
+      </a>
+      <a href="/videowall" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="High-Density CCTV Video Wall">
+        <i class="fa-solid fa-table-cells text-emerald-400"></i>
+        <span class="hidden 2xl:inline">Video Wall</span>
+      </a>
+      <a href="/forensics" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="Forensic Multi-Camera Search & Section 65B Dossier">
+        <i class="fa-solid fa-magnifying-glass-chart text-purple-400"></i>
+        <span class="hidden 2xl:inline">Forensics & 65B</span>
+      </a>
+      <a href="/docs" target="_blank" class="px-2 py-1.5 rounded-lg text-gray-500 hover:text-indigo-400 font-medium flex items-center space-x-1 transition shrink-0" title="OpenAPI Documentation">
+        <i class="fa-solid fa-book-open text-[11px]"></i>
+        <span class="hidden 2xl:inline">API</span>
+      </a>
+    </nav>
+
+    <!-- Auto-Refresh Indicator & Session -->
+    <div class="flex items-center space-x-1.5 sm:space-x-2 text-xs shrink-0 ml-auto pr-1 sm:pr-2">
+      <button onclick="loadDiagnostics()" class="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-gray-700 transition flex items-center shadow" title="Refresh Camera Health NOC Diagnostics">
+        <i class="fa-solid fa-arrows-rotate text-xs"></i>
+      </button>
+      <!-- Theme Switcher (Dark / Light Mode) -->
+      <button id="theme-toggle-btn" class="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-amber-300 border border-gray-700 transition flex items-center shadow" title="Toggle Dark / Light Mode">
+        <i id="theme-toggle-icon" class="fa-solid fa-sun text-xs"></i>
+      </button>
+      <!-- Dedicated Red Logout Button -->
+      <div class="flex items-center shrink-0 pl-1.5 border-l border-gray-800">
+        <a href="/login" class="logout-btn px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg transition flex items-center space-x-1.5 shrink-0 border border-red-500" title="Sign out of Sentinel">
+          <i class="fa-solid fa-power-off text-xs"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- NOC DASHBOARD MAIN -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-5">
+
+    <!-- KPI SUMMARY CARDS -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Grid Feeds</span>
+          <i class="fa-solid fa-video text-blue-400 text-sm"></i>
+        </div>
+        <div id="kpi-total" class="text-2xl sm:text-3xl font-bold font-mono text-white mt-2">23</div>
+        <div class="text-[11px] text-gray-500 mt-1">Across 26 Departments</div>
+      </div>
+
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Network Health</span>
+          <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+        </div>
+        <div id="kpi-online-rate" class="text-2xl sm:text-3xl font-bold font-mono text-emerald-400 mt-2">91.3%</div>
+        <div class="text-[11px] text-emerald-500/80 mt-1">21 Active & Transmitting</div>
+      </div>
+
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Lens Blur Alerts</span>
+          <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i>
+        </div>
+        <div id="kpi-blur" class="text-2xl sm:text-3xl font-bold font-mono text-amber-400 mt-2">1</div>
+        <div class="text-[11px] text-amber-500/80 mt-1">Low Laplacian Sharpness</div>
+      </div>
+
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tamper / Occlusion</span>
+          <i class="fa-solid fa-eye-slash text-rose-400 text-sm"></i>
+        </div>
+        <div id="kpi-occluded" class="text-2xl sm:text-3xl font-bold font-mono text-rose-400 mt-2">1</div>
+        <div class="text-[11px] text-rose-500/80 mt-1">Obstruction / Glare Flag</div>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow">
+      <div class="flex items-center space-x-1 bg-gray-950 p-1 rounded-xl border border-gray-800 text-xs">
+        <button onclick="filterStatus('all')" id="tab-all" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium">All (23)</button>
+        <button onclick="filterStatus('ONLINE')" id="tab-online" class="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white font-medium">Online (21)</button>
+        <button onclick="filterStatus('DEGRADED_BLUR')" id="tab-blur" class="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white font-medium">Blur (1)</button>
+        <button onclick="filterStatus('DEGRADED_OCCLUDED')" id="tab-occluded" class="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white font-medium">Occluded (1)</button>
+      </div>
+
+      <div class="text-xs text-gray-400 font-mono">
+        CV Model: <b class="text-cyan-400">Laplacian Focus Variance & Mean Luminance</b>
+      </div>
+    </div>
+
+    <!-- CAMERA DIAGNOSTICS GRID -->
+    <div id="camera-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Injected dynamically -->
+    </div>
+
+  </main>
+
+  <script>
+    let allDiagnostics = [];
+    let currentFilter = 'all';
+
+    async function loadDiagnostics() {
+      const grid = document.getElementById('camera-grid');
+      grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><br>Running CV Diagnostics on Video Grid...</div>`;
+
+      try {
+        const res = await fetch('/api/v1/cameras/health-diagnostics');
+        allDiagnostics = await res.json();
+        renderCards();
+      } catch (err) {
+        console.error("Failed to load diagnostics:", err);
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-red-400">Failed to load diagnostics data.</div>`;
+      }
+    }
+
+    function filterStatus(status) {
+      currentFilter = status;
+      ['all', 'online', 'blur', 'occluded'].forEach(id => {
+        const btn = document.getElementById(`tab-${id}`);
+        if (btn) btn.className = 'px-3 py-1.5 rounded-lg text-gray-400 hover:text-white font-medium';
+      });
+      const activeBtn = document.getElementById(`tab-${status === 'all' ? 'all' : status.toLowerCase().replace('degraded_', '')}`);
+      if (activeBtn) activeBtn.className = 'px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium';
+      renderCards();
+    }
+
+    function renderCards() {
+      const grid = document.getElementById('camera-grid');
+      grid.innerHTML = '';
+
+      const filtered = currentFilter === 'all' 
+        ? allDiagnostics 
+        : allDiagnostics.filter(d => d.health_status === currentFilter);
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">No cameras in this category.</div>`;
+        return;
+      }
+
+      filtered.forEach(cam => {
+        let statusBadge = '';
+        let borderClass = 'border-gray-800';
+        if (cam.health_status === 'ONLINE') {
+          statusBadge = '<span class="bg-emerald-950 text-emerald-300 border border-emerald-800/60 px-2 py-0.5 rounded text-[10px] font-bold">ONLINE (SHARP)</span>';
+        } else if (cam.health_status === 'DEGRADED_BLUR') {
+          statusBadge = '<span class="bg-amber-950 text-amber-300 border border-amber-800/60 px-2 py-0.5 rounded text-[10px] font-bold">DEGRADED (BLUR)</span>';
+          borderClass = 'border-amber-700/60 shadow-amber-950/40';
+        } else {
+          statusBadge = '<span class="bg-rose-950 text-rose-300 border border-rose-800/60 px-2 py-0.5 rounded text-[10px] font-bold">OCCLUDED / TAMPER</span>';
+          borderClass = 'border-rose-700/60 shadow-rose-950/40';
+        }
+
+        const card = document.createElement('div');
+        card.className = `bg-gray-900 border ${borderClass} rounded-2xl p-4 shadow-xl flex flex-col justify-between space-y-3`;
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-bold text-white font-mono text-xs">${cam.camera_id}</span>
+              ${statusBadge}
+            </div>
+            <div class="font-bold text-sm text-gray-200">${cam.name}</div>
+            <div class="text-xs text-gray-400"><i class="fa-solid fa-location-dot text-gray-500 mr-1"></i>${cam.location_name}, ${cam.city}</div>
+          </div>
+
+          <div class="bg-gray-950 rounded-xl p-3 border border-gray-800 space-y-2 text-xs font-mono">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">Focus Variance:</span>
+              <span class="${cam.laplacian_variance < 100 ? 'text-amber-400 font-bold' : 'text-emerald-400'}">${cam.laplacian_variance.toFixed(1)}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">Mean Luminance:</span>
+              <span class="${cam.mean_luminance < 30 || cam.mean_luminance > 220 ? 'text-rose-400 font-bold' : 'text-emerald-400'}">${cam.mean_luminance.toFixed(1)} / 255</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">Stream Transport:</span>
+              <span class="text-emerald-400">TCP (Enforced)</span>
+            </div>
+          </div>
+
+          <div class="text-[11px] text-gray-400 bg-gray-800/40 p-2.5 rounded-lg border border-gray-800">
+            <i class="fa-solid fa-screwdriver-wrench text-cyan-400 mr-1"></i>
+            <span>${cam.anti_tamper_recommendation}</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // Initial load
+    loadDiagnostics();
+  </script>
+</body>
+</html>

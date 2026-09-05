@@ -1,0 +1,62 @@
+services:
+  # 1. Spatial Database (PostgreSQL 16 + PostGIS 3.4)
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: sentinel_postgis
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sentinel_db
+      POSTGRES_USER: sentinel_admin
+      POSTGRES_PASSWORD: sentinel_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel_admin -d sentinel_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. In-Memory Fast Cache & Watchlist Matcher
+  redis:
+    image: redis:7.2-alpine
+    container_name: sentinel_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. High-Performance Media & RTSP/HLS/WebRTC Proxy
+  mediamtx:
+    image: bluenviron/mediamtx:latest-ffmpeg
+    container_name: sentinel_mediamtx
+    restart: unless-stopped
+    ports:
+      - "8554:8554"   # RTSP
+      - "1935:1935"   # RTMP
+      - "8888:8888"   # HLS for Web Browser Playback
+      - "8889:8889"   # WebRTC for Sub-Second Latency
+      - "9997:9997"   # MediaMTX REST Control API
+    volumes:
+      - ./data:/data:ro
+      - ./mediamtx.yml:/mediamtx.yml:ro
+    environment:
+      - MTX_PROTOCOLS=tcp
+      - MTX_RTSP_TRANSPORTS=tcp
+      - MTX_API=yes
+      - MTX_API_USE_AUTH=no
+      - MTX_API_ADDRESS=:9997
+      # Auto-publish local synthetic Sentinel camera streams in infinite loop
+      - MTX_PATHS_STREAM_1_RUNONINIT=ffmpeg -re -stream_loop -1 -i /data/test_feed.mp4 -c copy -f rtsp rtsp://localhost:8554/stream/1
+      - MTX_PATHS_STREAM_1_RUNONINITRESTART=yes
+
+volumes:
+  postgis_data:
+  redis_data:

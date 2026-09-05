@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+tests/
+tools/
+.pytest_cache/
+*.log
+docker-compose.yml
+Dockerfile
+mediamtx.yml

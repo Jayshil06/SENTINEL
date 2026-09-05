@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gujarat Police — Project SENTINEL Authentication Portal (GPIC-2026)</title>
+  
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/frontend/gujarat_police_logo.png">
+
+  <link rel="stylesheet" href="/frontend/theme.css">
+  <script src="/frontend/theme.js"></script>
+  
+  <style>
+    * { transition: background-color 0.15s ease, border-color 0.15s ease; }
+    .police-badge-glow {
+      box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans min-h-screen flex flex-col justify-between selection:bg-indigo-600 selection:text-white">
+
+  <!-- TOP STATUTORY NOTICE BAR -->
+  <header class="bg-blue-950/80 border-b border-blue-800/50 px-4 py-2 text-center text-[11px] text-blue-200 tracking-wide font-mono flex items-center justify-between">
+    <div class="flex items-center space-x-2 mx-auto">
+      <i class="fa-solid fa-shield-halved text-blue-400"></i>
+      <span>RESTRICTED LAW ENFORCEMENT SYSTEM • HOME DEPARTMENT, GOVERNMENT OF GUJARAT</span>
+    </div>
+    <!-- Theme Switcher (Dark / Light Mode) -->
+    <button id="theme-toggle-btn" class="px-2 py-0.5 rounded bg-blue-900/60 hover:bg-blue-800 text-amber-300 border border-blue-700/60 transition flex items-center space-x-1 shadow shrink-0" title="Toggle Dark / Light Mode">
+      <i id="theme-toggle-icon" class="fa-solid fa-sun text-[10px]"></i>
+      <span id="theme-toggle-text" class="text-[10px] font-medium">Light</span>
+    </button>
+  </header>
+
+  <!-- MAIN LOGIN CARD -->
+  <main class="flex-1 flex items-center justify-center p-4 sm:p-6">
+    <div class="max-w-md w-full bg-gray-900 border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative overflow-hidden police-badge-glow">
+      
+      <!-- Top Decorative Accent -->
+      <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-500 to-amber-500"></div>
+
+      <!-- Agency Branding & Emblems -->
+      <div class="text-center space-y-3">
+        <div class="inline-flex p-2 bg-white/10 rounded-2xl border border-gray-700 shadow-inner">
+          <img src="/frontend/gujarat_police_logo.png" alt="Gujarat Police Official Emblem" class="w-16 h-16 object-contain drop-shadow">
+        </div>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-widest text-blue-400 font-mono">GUJARAT POLICE • SCRB</div>
+          <h1 class="text-xl sm:text-2xl font-black tracking-wider text-white mt-0.5">PROJECT SENTINEL</h1>
+          <p class="text-[11px] text-gray-400 mt-1">Statewide Integrated Video Management & Tactical Tracking Platform</p>
+        </div>
+      </div>
+
+      <!-- Authentication Form -->
+      <form id="login-form" class="space-y-4" onsubmit="event.preventDefault(); handleLogin();">
+        
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-300 uppercase tracking-wider mb-1">Police Officer Badge / ID</label>
+          <div class="relative">
+            <i class="fa-solid fa-id-badge absolute left-3.5 top-3 text-gray-500 text-xs"></i>
+            <input id="badge-input" type="text" value="GP-POL-001" required
+                   class="w-full bg-gray-950 border border-gray-700 rounded-xl pl-9 pr-3 py-2.5 text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono tracking-wider">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-300 uppercase tracking-wider mb-1">Officer Name</label>
+          <div class="relative">
+            <i class="fa-solid fa-user-shield absolute left-3.5 top-3 text-gray-500 text-xs"></i>
+            <input id="name-input" type="text" value="Inspector ABC" required
+                   class="w-full bg-gray-950 border border-gray-700 rounded-xl pl-9 pr-3 py-2.5 text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-300 uppercase tracking-wider mb-1">Assigned Operational Role</label>
+          <div class="relative">
+            <select id="role-select" class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2.5 text-xs text-gray-100 focus:outline-none focus:border-indigo-500">
+              <option value="Investigating Officer (IO)">Investigating Officer (Section 65B Authorized)</option>
+              <option value="Control Room Dispatcher">Command Room Dispatcher (State C4i)</option>
+              <option value="Field Pursuit Commander">Field Pursuit & PCR Van Interceptor</option>
+              <option value="NOC Systems Admin">Technical In-Charge / NOC Administrator</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-300 uppercase tracking-wider mb-1">Security PIN / Token</label>
+          <div class="relative">
+            <i class="fa-solid fa-key absolute left-3.5 top-3 text-gray-500 text-xs"></i>
+            <input id="pin-input" type="password" value="••••••••" required
+                   class="w-full bg-gray-950 border border-gray-700 rounded-xl pl-9 pr-3 py-2.5 text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono">
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submit-btn" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-lock-open text-xs"></i>
+          <span>Authenticate & Launch Command Center</span>
+        </button>
+      </form>
+
+      <!-- Quick Demo Login Presets for Hackathon Judges -->
+      <div class="pt-4 border-t border-gray-800 space-y-2.5">
+        <div class="text-[10px] uppercase font-bold text-gray-500 tracking-wider text-center">
+          <i class="fa-solid fa-bolt text-amber-400 mr-1"></i> Quick Demo Access for Hackathon Jury
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="quickLogin('Inspector ABC', 'GP-POL-001', 'Investigating Officer (IO)', '/')" 
+                  class="p-2 rounded-lg bg-gray-800 hover:bg-gray-750 border border-gray-700 text-[11px] text-gray-200 text-left transition flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <div class="truncate">
+              <div class="font-bold truncate">Inspector ABC</div>
+              <div class="text-[9px] text-gray-400 font-mono">Command Map</div>
+            </div>
+          </button>
+
+          <button onclick="quickLogin('Inspector ABC', 'GP-POL-001', 'Investigating Officer (IO)', '/forensics')" 
+                  class="p-2 rounded-lg bg-gray-800 hover:bg-gray-750 border border-gray-700 text-[11px] text-gray-200 text-left transition flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <div class="truncate">
+              <div class="font-bold truncate">Forensics IO</div>
+              <div class="text-[9px] text-gray-400 font-mono">Sec. 65B Portal</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Legal Warning Footer -->
+      <div class="text-[10px] text-gray-500 text-center font-mono leading-relaxed">
+        Authorized use only under Information Technology Act, 2000. All sessions, telemetry searches, and video accesses are cryptographically audited.
+      </div>
+    </div>
+  </main>
+
+  <!-- BOTTOM FOOTER -->
+  <footer class="p-3 text-center text-xs text-gray-600 border-t border-gray-900">
+    Project SENTINEL • Gujarat Police Innovation Challenge 2026 (GPIC-2026)
+  </footer>
+
+  <script>
+    function handleLogin() {
+      const badge = document.getElementById('badge-input').value.trim();
+      const name = document.getElementById('name-input').value.trim();
+      const role = document.getElementById('role-select').value;
+
+      // Set cookie (24 hour expiration)
+      document.cookie = "sentinel_session=" + encodeURIComponent(badge) + "; path=/; max-age=86400; SameSite=Lax";
+
+      const user = { badge, name, role, loggedInAt: new Date().toISOString() };
+      localStorage.setItem('sentinel_user', JSON.stringify(user));
+
+      const btn = document.getElementById('submit-btn');
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Authorizing Officer...`;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const target = urlParams.get('redirect') || '/';
+
+      setTimeout(() => {
+        window.location.href = target;
+      }, 400);
+    }
+
+    function quickLogin(name, badge, role, redirectUrl) {
+      document.cookie = "sentinel_session=" + encodeURIComponent(badge) + "; path=/; max-age=86400; SameSite=Lax";
+      const user = { badge, name, role, loggedInAt: new Date().toISOString() };
+      localStorage.setItem('sentinel_user', JSON.stringify(user));
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const target = urlParams.get('redirect') || redirectUrl;
+      window.location.href = target;
+    }
+  </script>
+</body>
+</html>

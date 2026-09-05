@@ -1,0 +1,18 @@
+api: yes
+apiAddress: :9997
+
+# Strictly enforce TCP transport (Sentinel Integrator Guide §2 & §3)
+rtspTransports: [tcp]
+
+# HLS for browser playback
+hlsAddress: :8888
+webrtcAddress: :8889
+
+paths:
+  # Local Sandbox live RTSP broadcast of Sentinel feed in infinite loop
+  stream/1:
+    runOnInit: ffmpeg -re -stream_loop -1 -i /data/test_feed.mp4 -c copy -f rtsp rtsp://localhost:8554/stream/1
+    runOnInitRestart: yes
+  
+  # Allow on-demand proxying for any other cameras
+  all_others:

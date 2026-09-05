@@ -1,0 +1,134 @@
+/* Project SENTINEL — Light & Dark Theme System */
+html.light-theme {
+  color-scheme: light;
+}
+
+html.light-theme body {
+  background-color: #f8fafc !important; /* slate-50 */
+  color: #0f172a !important; /* slate-900 */
+}
+
+/* Headers & Navigation */
+html.light-theme header {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.06) !important;
+}
+
+html.light-theme header h1,
+html.light-theme header h2,
+html.light-theme header .text-white {
+  color: #0f172a !important;
+}
+
+/* Panels, Drawers, Sidebars & Cards */
+html.light-theme aside,
+html.light-theme main .bg-gray-900,
+html.light-theme .bg-gray-900,
+html.light-theme .bg-gray-950 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+html.light-theme .bg-gray-850,
+html.light-theme .bg-gray-800,
+html.light-theme .bg-gray-800\/40,
+html.light-theme .bg-gray-800\/80,
+html.light-theme .bg-gray-800\/90 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+html.light-theme .bg-gray-800:hover,
+html.light-theme .hover\:bg-gray-800:hover {
+  background-color: #e2e8f0 !important;
+}
+
+/* Typography & Text */
+html.light-theme .text-gray-100,
+html.light-theme .text-gray-200,
+html.light-theme .text-gray-300 {
+  color: #1e293b !important;
+}
+
+html.light-theme .text-gray-400,
+html.light-theme .text-gray-500 {
+  color: #64748b !important;
+}
+
+html.light-theme .border-gray-700,
+html.light-theme .border-gray-700\/40,
+html.light-theme .border-gray-700\/60,
+html.light-theme .border-gray-700\/80,
+html.light-theme .border-gray-800,
+html.light-theme .border-gray-900 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Form Inputs & Selects */
+html.light-theme input,
+html.light-theme select {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light-theme input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Navigation Tabs */
+html.light-theme nav.bg-gray-950\/80,
+html.light-theme nav.bg-gray-950 {
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light-theme nav a.text-gray-400 {
+  color: #475569 !important;
+}
+
+html.light-theme nav a.text-gray-400:hover {
+  background-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+/* Route Tracer HUD */
+html.light-theme #route-hud-panel {
+  background-color: rgba(255, 255, 255, 0.97) !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Alert Cards */
+html.light-theme .alert-card-enter {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+}
+
+html.light-theme .alert-card-enter .text-red-100,
+html.light-theme .alert-card-enter .text-red-200 {
+  color: #9f1239 !important;
+}
+
+html.light-theme .alert-card-enter .text-gray-300,
+html.light-theme .alert-card-enter .text-gray-400 {
+  color: #881337 !important;
+}
+
+/* Custom Scrollbars in Light Mode */
+html.light-theme ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+html.light-theme ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+html.light-theme ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

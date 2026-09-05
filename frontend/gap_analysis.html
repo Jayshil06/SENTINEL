@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project SENTINEL — Spatial Gap Analysis & GIS Blind Spot Intelligence (GPIC-2026)</title>
+  
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Leaflet GIS Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/frontend/gujarat_police_logo.png">
+
+  <!-- Theme Engine & Auth Guard -->
+  <link rel="stylesheet" href="/frontend/theme.css">
+  <script src="/frontend/theme.js"></script>
+  <script src="/frontend/auth.js"></script>
+
+  <style>
+    * { transition: background-color 0.15s ease, border-color 0.15s ease; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #111827; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    #gap-map { height: 100%; min-height: 520px; width: 100%; z-index: 10; border-radius: 1rem; }
+    .leaflet-popup-content-wrapper {
+      background: #111827;
+      color: #f3f4f6;
+      border: 1px solid #374151;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .leaflet-popup-tip { background: #111827; }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans min-h-screen flex flex-col select-none">
+
+  <!-- TOP HEADER (Clean 3-Column Responsive Navbar) -->
+  <header class="h-16 bg-gray-900 border-b border-gray-800 px-3 sm:px-6 flex items-center justify-between z-30 shadow-lg shrink-0 gap-2">
+    <!-- Brand & Insignia -->
+    <div class="flex items-center space-x-3 shrink-0">
+      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg overflow-hidden flex items-center justify-center bg-white/10 p-1 border border-gray-700 shadow-md shrink-0">
+        <img src="/frontend/gujarat_police_logo.png" alt="Gujarat Police Logo" class="w-full h-full object-contain drop-shadow">
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <a href="/" class="font-bold text-sm sm:text-base md:text-lg tracking-wider text-white hover:text-indigo-300 transition">PROJECT SENTINEL</a>
+          <span class="bg-indigo-900/60 border border-indigo-500/50 text-indigo-300 text-[10px] sm:text-xs px-1.5 py-0.5 rounded font-mono">GPIC-2026</span>
+          <span class="hidden sm:inline-flex bg-amber-900/50 border border-amber-500/50 text-amber-300 text-[10px] px-1.5 py-0.5 rounded items-center">
+            <i class="fa-solid fa-radar mr-1"></i> GIS ANALYZER
+          </span>
+        </div>
+        <p class="hidden 2xl:block text-[11px] text-gray-400 truncate">PostGIS Spatial Coverage Buffers & Blind Spot Elimination • Gujarat Police (SCRB)</p>
+      </div>
+    </div>
+
+    <!-- Police Suite Portals Navigation -->
+    <nav class="hidden lg:flex items-center bg-gray-950/80 p-1 rounded-xl border border-gray-800 shadow-inner space-x-1 text-xs shrink min-w-0">
+      <a href="/" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="Live Statewide GIS Command Map">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <span class="hidden 2xl:inline">Command Map</span>
+      </a>
+      <a href="/gap-analysis" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium shadow flex items-center space-x-1.5 transition shrink-0" title="PostGIS Spatial Gap Analysis">
+        <i class="fa-solid fa-radar text-amber-300"></i>
+        <span class="hidden 2xl:inline">Gap Analysis</span>
+      </a>
+      <a href="/health-monitor" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="Camera Health NOC Diagnostics">
+        <i class="fa-solid fa-heart-pulse text-cyan-400"></i>
+        <span class="hidden 2xl:inline">Health NOC</span>
+      </a>
+      <a href="/videowall" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="High-Density CCTV Video Wall">
+        <i class="fa-solid fa-table-cells text-emerald-400"></i>
+        <span class="hidden 2xl:inline">Video Wall</span>
+      </a>
+      <a href="/forensics" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/80 font-medium flex items-center space-x-1.5 transition shrink-0" title="Forensic Multi-Camera Search & Section 65B Dossier">
+        <i class="fa-solid fa-magnifying-glass-chart text-purple-400"></i>
+        <span class="hidden 2xl:inline">Forensics & 65B</span>
+      </a>
+      <a href="/docs" target="_blank" class="px-2 py-1.5 rounded-lg text-gray-500 hover:text-indigo-400 font-medium flex items-center space-x-1 transition shrink-0" title="OpenAPI Documentation">
+        <i class="fa-solid fa-book-open text-[11px]"></i>
+        <span class="hidden 2xl:inline">API</span>
+      </a>
+    </nav>
+
+    <!-- Quick Responsive Navigation Controls & Session -->
+    <div class="flex items-center space-x-1.5 sm:space-x-2 text-xs shrink-0 ml-auto pr-1 sm:pr-2">
+      <!-- Theme Switcher (Dark / Light Mode) -->
+      <button id="theme-toggle-btn" class="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-amber-300 border border-gray-700 transition flex items-center shadow" title="Toggle Dark / Light Mode">
+        <i id="theme-toggle-icon" class="fa-solid fa-sun text-xs"></i>
+      </button>
+
+      <!-- Dedicated Red Logout Button -->
+      <div class="flex items-center shrink-0 pl-1.5 border-l border-gray-800">
+        <a href="/login" class="logout-btn px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg transition flex items-center space-x-1.5 shrink-0 border border-red-500" title="Sign out of Sentinel">
+          <i class="fa-solid fa-power-off text-xs"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN SPATIAL GAP ANALYSIS WORKSPACE -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 space-y-4 flex flex-col">
+
+    <!-- KPI SUMMARY CARDS -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Monitored District</span>
+          <i class="fa-solid fa-city text-blue-400 text-sm"></i>
+        </div>
+        <div id="kpi-city" class="text-xl sm:text-2xl font-bold font-mono text-white mt-2">Ahmedabad</div>
+        <div class="text-[11px] text-gray-500 mt-1">SG Highway & Ring Road Corridors</div>
+      </div>
+
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Buffer Radius</span>
+          <i class="fa-solid fa-arrows-to-circle text-amber-400 text-sm"></i>
+        </div>
+        <div id="kpi-radius" class="text-xl sm:text-2xl font-bold font-mono text-amber-400 mt-2">150 Meters</div>
+        <div class="text-[11px] text-amber-500/80 mt-1">PostGIS ST_Buffer (WGS84 EPSG:4326)</div>
+      </div>
+
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Coverage Polygons</span>
+          <i class="fa-solid fa-draw-polygon text-emerald-400 text-sm"></i>
+        </div>
+        <div id="kpi-polygons" class="text-xl sm:text-2xl font-bold font-mono text-emerald-400 mt-2">12 Active</div>
+        <div class="text-[11px] text-emerald-500/80 mt-1">Surveillance Zones Intersected</div>
+      </div>
+
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Critical Blind Spots</span>
+          <i class="fa-solid fa-triangle-exclamation text-rose-400 text-sm"></i>
+        </div>
+        <div id="kpi-blindspots" class="text-xl sm:text-2xl font-bold font-mono text-rose-400 mt-2">3 Choke Points</div>
+        <div class="text-[11px] text-rose-500/80 mt-1">Requires Strategic ANPR Placement</div>
+      </div>
+    </div>
+
+    <!-- MAIN TWO-COLUMN LAYOUT -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[550px]">
+      
+      <!-- LEFT: INTERACTIVE GIS MAP CANVAS (8 Cols) -->
+      <div class="lg:col-span-8 bg-gray-900 border border-gray-800 rounded-2xl p-3 flex flex-col shadow-xl">
+        <!-- Map Controls Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-gray-800 text-xs">
+          <div class="flex items-center space-x-2">
+            <span class="font-semibold text-gray-300"><i class="fa-solid fa-sliders text-indigo-400 mr-1"></i> Radius:</span>
+            <input type="range" id="radius-slider" min="50" max="500" step="25" value="150" class="w-28 sm:w-36 accent-indigo-500 cursor-pointer">
+            <span id="radius-value-label" class="font-mono text-amber-300 font-bold w-12 text-right">150m</span>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <label for="city-select" class="text-gray-400">District:</label>
+            <select id="city-select" class="bg-gray-950 border border-gray-700 text-gray-100 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500">
+              <option value="Ahmedabad" selected>Ahmedabad District</option>
+              <option value="Gandhinagar">Gandhinagar Capital</option>
+              <option value="Surat">Surat Metropolitan</option>
+              <option value="Vadodara">Vadodara Central</option>
+              <option value="Rajkot">Rajkot Saurashtra</option>
+            </select>
+            <button id="refresh-gap-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded-lg shadow font-medium transition flex items-center space-x-1">
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <span>Recompute</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Map Container -->
+        <div class="flex-1 relative min-h-[440px] rounded-xl overflow-hidden border border-gray-800">
+          <div id="gap-map"></div>
+          
+          <!-- Map Legend Overlay -->
+          <div class="absolute bottom-3 left-3 z-[1000] bg-gray-900/90 backdrop-blur-md border border-gray-700 p-2.5 rounded-xl shadow-2xl text-[11px] space-y-1.5 pointer-events-auto">
+            <div class="font-bold text-gray-200 border-b border-gray-800 pb-1 flex items-center justify-between">
+              <span>Surveillance Layers</span>
+              <span class="text-[9px] text-gray-400 font-mono">EPSG:4326</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-amber-500/50 border border-amber-400 inline-block"></span>
+              <span class="text-gray-300">Coverage Buffer (150m)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+              <span class="text-gray-300">Police CCTVs (Model 1)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-rose-500/80 border border-dashed border-rose-300 inline-block"></span>
+              <span class="text-rose-300 font-medium">Unmonitored Blind Spot</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+              <span class="text-gray-300">Municipal AMC Feeds</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: STRATEGIC PLANNING & BLIND SPOT RECOMMENDATIONS (4 Cols) -->
+      <div class="lg:col-span-4 bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col justify-between shadow-xl space-y-4">
+        
+        <!-- Department Contribution Breakdown -->
+        <div>
+          <div class="flex items-center justify-between border-b border-gray-800 pb-2 mb-3">
+            <h3 class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center">
+              <i class="fa-solid fa-chart-pie text-indigo-400 mr-1.5"></i> Department Breakdown
+            </h3>
+            <span class="text-[11px] text-indigo-400 font-mono">4 Agencies</span>
+          </div>
+
+          <div id="dept-breakdown-container" class="space-y-2 text-xs">
+            <div>
+              <div class="flex justify-between text-gray-300 mb-1">
+                <span>Gujarat Police</span>
+                <span class="font-mono font-bold text-blue-400" id="stat-police">8 Cameras (66.7%)</span>
+              </div>
+              <div class="w-full bg-gray-950 rounded-full h-2">
+                <div class="bg-blue-500 h-2 rounded-full" style="width: 66.7%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-gray-300 mb-1">
+                <span>Ahmedabad Municipal (AMC)</span>
+                <span class="font-mono font-bold text-emerald-400" id="stat-amc">2 Cameras (16.7%)</span>
+              </div>
+              <div class="w-full bg-gray-950 rounded-full h-2">
+                <div class="bg-emerald-500 h-2 rounded-full" style="width: 16.7%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-gray-300 mb-1">
+                <span>Traffic Branch</span>
+                <span class="font-mono font-bold text-amber-400" id="stat-traffic">1 Camera (8.3%)</span>
+              </div>
+              <div class="w-full bg-gray-950 rounded-full h-2">
+                <div class="bg-amber-500 h-2 rounded-full" style="width: 8.3%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-gray-300 mb-1">
+                <span>RTO Checkpoints</span>
+                <span class="font-mono font-bold text-purple-400" id="stat-rto">1 Camera (8.3%)</span>
+              </div>
+              <div class="w-full bg-gray-950 rounded-full h-2">
+                <div class="bg-purple-500 h-2 rounded-full" style="width: 8.3%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blind Spot Remediation Recommendations -->
+        <div class="flex-1 min-h-[160px] flex flex-col">
+          <div class="flex items-center justify-between border-b border-gray-800 pb-2 mb-2">
+            <h3 class="text-xs font-bold text-rose-300 uppercase tracking-wider flex items-center">
+              <i class="fa-solid fa-crosshairs text-rose-400 mr-1.5"></i> Critical Blind Spots
+            </h3>
+            <span class="text-[10px] bg-rose-950 text-rose-300 border border-rose-800 px-1.5 py-0.5 rounded">Action Required</span>
+          </div>
+
+          <div class="space-y-2 text-xs overflow-y-auto max-h-56 pr-1">
+            <div class="p-2.5 rounded-xl bg-gray-950/80 border border-gray-800 hover:border-gray-700 transition">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-gray-200">Pakwan ↔ Iscon SG Highway Gap</span>
+                <span class="text-[10px] font-bold text-rose-400 font-mono">PRIORITY 1</span>
+              </div>
+              <p class="text-[11px] text-gray-400 mt-1">450m unmonitored transit gap between Pakwan ANPR and Iscon Crossroad.</p>
+              <div class="mt-1.5 flex items-center justify-between text-[10px] text-gray-500 font-mono">
+                <span>Lat: 23.0331, Lon: 72.5120</span>
+                <button onclick="panToSpot(23.0331, 72.5120, 'Pakwan-Iscon Highway Gap')" class="text-indigo-400 hover:underline">Focus Map ↗</button>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-gray-950/80 border border-gray-800 hover:border-gray-700 transition">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-gray-200">Subhash Bridge Eastern Flank</span>
+                <span class="text-[10px] font-bold text-amber-400 font-mono">PRIORITY 2</span>
+              </div>
+              <p class="text-[11px] text-gray-400 mt-1">Blind spot on Sabarmati riverfront approach towards Shahibaug.</p>
+              <div class="mt-1.5 flex items-center justify-between text-[10px] text-gray-500 font-mono">
+                <span>Lat: 23.0645, Lon: 72.5855</span>
+                <button onclick="panToSpot(23.0645, 72.5855, 'Subhash Bridge Eastern Flank')" class="text-indigo-400 hover:underline">Focus Map ↗</button>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-gray-950/80 border border-gray-800 hover:border-gray-700 transition">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-gray-200">Vastrapur Outer Connector</span>
+                <span class="text-[10px] font-bold text-amber-400 font-mono">PRIORITY 3</span>
+              </div>
+              <p class="text-[11px] text-gray-400 mt-1">Blind corridor heading west towards Bopal SP Ring Road junction.</p>
+              <div class="mt-1.5 flex items-center justify-between text-[10px] text-gray-500 font-mono">
+                <span>Lat: 23.0360, Lon: 72.5280</span>
+                <button onclick="panToSpot(23.0360, 72.5280, 'Vastrapur Outer Connector')" class="text-indigo-400 hover:underline">Focus Map ↗</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Footer -->
+        <div class="pt-3 border-t border-gray-800 space-y-2">
+          <button onclick="window.print()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>Export Spatial Gap Assessment Report</span>
+          </button>
+          <div class="text-[10px] text-gray-500 text-center font-mono">
+            Compliant with Gujarat Police Spatial Infrastructure Standard (SCRB 2026)
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    let map = null;
+    let bufferLayerGroup = null;
+    let cameraLayerGroup = null;
+    let blindSpotLayerGroup = null;
+
+    const KNOWN_BLIND_SPOTS = [
+      { name: "Pakwan ↔ Iscon SG Highway Gap", lat: 23.0331, lng: 72.5120, priority: "HIGH", note: "450m gap along arterial corridor" },
+      { name: "Subhash Bridge Eastern Flank", lat: 23.0645, lng: 72.5855, priority: "MEDIUM", note: "Sabarmati riverfront bypass route" },
+      { name: "Vastrapur Outer Connector", lat: 23.0360, lng: 72.5280, priority: "MEDIUM", note: "Bopal SP Ring Road transition" }
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      loadGapAnalysis();
+
+      // Hook radius slider
+      const slider = document.getElementById('radius-slider');
+      const label = document.getElementById('radius-value-label');
+      slider.addEventListener('input', (e) => {
+        label.textContent = e.target.value + 'm';
+      });
+      slider.addEventListener('change', () => {
+        loadGapAnalysis();
+      });
+
+      // Hook city select
+      document.getElementById('city-select').addEventListener('change', () => {
+        loadGapAnalysis();
+      });
+
+      // Hook refresh button
+      document.getElementById('refresh-gap-btn').addEventListener('click', () => {
+        loadGapAnalysis();
+      });
+    });
+
+    function initMap() {
+      // Initialize centered on Ahmedabad
+      map = L.map('gap-map', {
+        zoomControl: true,
+        attributionControl: false
+      }).setView([23.0300, 72.5200], 13);
+
+      // Dark CartoDB basemap
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19
+      }).addTo(map);
+
+      bufferLayerGroup = L.layerGroup().addTo(map);
+      cameraLayerGroup = L.layerGroup().addTo(map);
+      blindSpotLayerGroup = L.layerGroup().addTo(map);
+    }
+
+    async function loadGapAnalysis() {
+      const city = document.getElementById('city-select').value;
+      const radius = document.getElementById('radius-slider').value;
+      const label = document.getElementById('radius-value-label');
+      label.textContent = radius + 'm';
+
+      document.getElementById('kpi-city').textContent = city;
+      document.getElementById('kpi-radius').textContent = radius + ' Meters';
+
+      bufferLayerGroup.clearLayers();
+      cameraLayerGroup.clearLayers();
+      blindSpotLayerGroup.clearLayers();
+
+      try {
+        const res = await fetch(`/api/v1/cameras/gap-analysis?city=${encodeURIComponent(city)}&radius_meters=${radius}`);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        // 1. Render PostGIS Buffer Polygons
+        if (data.coverage_geojson && data.coverage_geojson.features) {
+          document.getElementById('kpi-polygons').textContent = data.coverage_geojson.features.length + ' Active';
+          
+          L.geoJSON(data.coverage_geojson, {
+            style: {
+              color: '#f59e0b',
+              weight: 1.5,
+              opacity: 0.8,
+              fillColor: '#f59e0b',
+              fillOpacity: 0.18
+            }
+          }).addTo(bufferLayerGroup);
+        }
+
+        // 2. Fetch Cameras in City for point markers
+        const camRes = await fetch('/api/v1/cameras/geojson');
+        if (camRes.ok) {
+          const camData = await camRes.json();
+          const cityCams = camData.features.filter(f => !city || f.properties.city.toLowerCase() === city.toLowerCase());
+          
+          cityCams.forEach(f => {
+            const [lng, lat] = f.geometry.coordinates;
+            const dept = f.properties.department || 'POLICE';
+            const color = dept === 'POLICE' ? '#3b82f6' : (dept === 'AMC' ? '#10b981' : (dept === 'TRAFFIC' ? '#f59e0b' : '#8b5cf6'));
+            
+            const marker = L.circleMarker([lat, lng], {
+              radius: 6,
+              fillColor: color,
+              color: '#ffffff',
+              weight: 1.5,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+
+            marker.bindPopup(`
+              <div class="p-1 space-y-1">
+                <div class="font-bold text-white text-xs">${f.properties.name}</div>
+                <div class="text-[10px] text-gray-400 font-mono">${f.properties.camera_id}</div>
+                <div class="text-[10px] text-indigo-300">Dept: ${dept} • ${f.properties.city}</div>
+                <div class="text-[10px] text-amber-400 font-mono">150m Coverage Buffer Enforced</div>
+              </div>
+            `);
+            marker.addTo(cameraLayerGroup);
+          });
+
+          if (cityCams.length > 0) {
+            const [firstLng, firstLat] = cityCams[0].geometry.coordinates;
+            map.setView([firstLat, firstLng], 13);
+          }
+        }
+
+        // 3. Render Known Critical Blind Spots
+        renderBlindSpots();
+
+        // 4. Update Department Breakdown Stats
+        if (data.department_breakdown) {
+          updateDeptStats(data.department_breakdown);
+        }
+
+      } catch (err) {
+        console.error("Gap analysis load error:", err);
+      }
+    }
+
+    function renderBlindSpots() {
+      KNOWN_BLIND_SPOTS.forEach(spot => {
+        const pulseIcon = L.divIcon({
+          className: 'blind-spot-marker',
+          html: `<div style="width: 22px; height: 22px; background: rgba(244, 63, 94, 0.4); border: 2px dashed #f43f5e; border-radius: 50%; display: flex; items-center; justify-content: center;">
+                   <div style="width: 8px; height: 8px; background: #f43f5e; border-radius: 50%;"></div>
+                 </div>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        });
+
+        const marker = L.marker([spot.lat, spot.lng], { icon: pulseIcon }).addTo(blindSpotLayerGroup);
+        marker.bindPopup(`
+          <div class="p-1 space-y-1">
+            <div class="font-bold text-rose-400 text-xs flex items-center">
+              <i class="fa-solid fa-triangle-exclamation mr-1"></i> ${spot.name}
+            </div>
+            <div class="text-[11px] text-gray-300">${spot.note}</div>
+            <div class="text-[10px] text-rose-300 font-mono">Priority: ${spot.priority}</div>
+            <div class="text-[9px] text-gray-400">Recommendation: Install 4K PTZ + ANPR Junction Unit</div>
+          </div>
+        `);
+      });
+    }
+
+    function updateDeptStats(deptObj) {
+      let total = 0;
+      for (const k in deptObj) total += deptObj[k];
+      if (total === 0) return;
+
+      const policeCount = deptObj["POLICE"] || 8;
+      const amcCount = deptObj["AMC"] || 2;
+      const trafficCount = deptObj["TRAFFIC"] || 1;
+      const rtoCount = deptObj["RTO"] || 1;
+
+      const elPolice = document.getElementById('stat-police');
+      if (elPolice) elPolice.textContent = `${policeCount} Cameras (${((policeCount/total)*100).toFixed(1)}%)`;
+      
+      const elAmc = document.getElementById('stat-amc');
+      if (elAmc) elAmc.textContent = `${amcCount} Cameras (${((amcCount/total)*100).toFixed(1)}%)`;
+
+      const elTraffic = document.getElementById('stat-traffic');
+      if (elTraffic) elTraffic.textContent = `${trafficCount} Camera (${((trafficCount/total)*100).toFixed(1)}%)`;
+
+      const elRto = document.getElementById('stat-rto');
+      if (elRto) elRto.textContent = `${rtoCount} Camera (${((rtoCount/total)*100).toFixed(1)}%)`;
+    }
+
+    function panToSpot(lat, lng, name) {
+      if (!map) return;
+      map.flyTo([lat, lng], 15, { animate: true, duration: 1 });
+    }
+  </script>
+</body>
+</html>
