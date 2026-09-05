@@ -1,5 +1,5 @@
 // Project SENTINEL — Frontend Command Center Engine
-const API_BASE = "http://localhost:8000/api/v1";
+const API_BASE = "/api/v1";
 
 // 1. Initialize Leaflet Map centered on Gandhinagar & Ahmedabad
 const map = L.map('map', { zoomControl: false }).setView([23.12, 72.58], 11);
@@ -440,25 +440,36 @@ document.getElementById('seed-demo-btn').addEventListener('click', async () => {
 
 // 5. Real-Time WebSocket Alerts Hub
 function connectAlertWebSocket() {
-  const ws = new WebSocket("ws://localhost:8000/ws/alerts");
+  try {
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsHost = window.location.host || "localhost:8000";
+    const ws = new WebSocket(`${wsProtocol}//${wsHost}/ws/alerts`);
 
-  ws.onopen = () => console.log("✅ WebSocket connected to Project SENTINEL Alert Gateway.");
+    ws.onopen = () => console.log("✅ WebSocket connected to Project SENTINEL Alert Gateway.");
 
-  ws.onmessage = (event) => {
-    try {
-      const alertData = JSON.parse(event.data);
-      renderAlertCard(alertData);
-      playAlertAudio();
-      triggerPulsingMarker(alertData);
-    } catch (e) {
-      console.warn("WebSocket parse error:", e);
-    }
-  };
+    ws.onmessage = (event) => {
+      try {
+        const alertData = JSON.parse(event.data);
+        renderAlertCard(alertData);
+        playAlertAudio();
+        triggerPulsingMarker(alertData);
+      } catch (e) {
+        console.warn("WebSocket parse error:", e);
+      }
+    };
 
-  ws.onclose = () => {
-    console.log("WebSocket disconnected. Reconnecting in 3s...");
-    setTimeout(connectAlertWebSocket, 3000);
-  };
+    ws.onerror = (e) => {
+      // In serverless / Vercel cloud, WebSockets may be unsupported; silence spam
+      console.log("WebSocket alert gateway idle/unavailable in serverless mode.");
+    };
+
+    ws.onclose = () => {
+      // Reconnect with a backoff so serverless doesn't spam reconnection loops
+      setTimeout(connectAlertWebSocket, 15000);
+    };
+  } catch (err) {
+    console.warn("WebSocket connection bypassed:", err);
+  }
 }
 
 function renderAlertCard(data) {
@@ -733,7 +744,7 @@ exportCertBtn.addEventListener('click', async () => {
   exportCertBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Generating Dossier...`;
 
   try {
-    const res = await fetch(`http://localhost:8000/api/v1/forensics/certificate/${plate}`);
+    const res = await fetch(`${API_BASE}/forensics/certificate/${plate}`);
     if (!res.ok) throw new Error("Failed to fetch certificate");
     const cert = await res.json();
 
@@ -741,7 +752,7 @@ exportCertBtn.addEventListener('click', async () => {
     document.getElementById('cert-master-hash').textContent = cert.overall_dossier_sha256;
     document.getElementById('cert-statutory-text').textContent = cert.statutory_declaration;
     document.getElementById('cert-sighting-count').textContent = `${cert.total_detections_certified} Certified Sightings`;
-    document.getElementById('cert-print-link').href = `http://localhost:8000/api/v1/forensics/certificate/${plate}/print`;
+    document.getElementById('cert-print-link').href = `${API_BASE}/forensics/certificate/${plate}/print`;
 
     const tbody = document.getElementById('cert-table-body');
     tbody.innerHTML = '';

@@ -15,7 +15,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 async_engine = create_async_engine(
     settings.ASYNC_DATABASE_URI,
     pool_pre_ping=True,
-    echo=False
+    echo=False,
+    connect_args={"statement_cache_size": 0}
 )
 AsyncSessionLocal = async_sessionmaker(
     bind=async_engine,

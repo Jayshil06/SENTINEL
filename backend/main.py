@@ -10,10 +10,15 @@ from backend.app.api import cameras, watchlist, tracking, websockets, forensics,
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Start background Redis alert listener for WebSocket broadcasting
-    task = asyncio.create_task(websockets.redis_alert_listener())
+    # Start background Redis alert listener for WebSocket broadcasting if possible
+    task = None
+    try:
+        task = asyncio.create_task(websockets.redis_alert_listener())
+    except Exception:
+        pass
     yield
-    task.cancel()
+    if task:
+        task.cancel()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -217,6 +222,18 @@ def health_check():
             "mediamtx": f"http://{settings.MEDIAMTX_HOST}:{settings.MEDIAMTX_API_PORT}"
         }
     }
+
+@app.get("/health/db", tags=["System"])
+def health_db_check():
+    from backend.app.db.session import SessionLocal
+    from sqlalchemy import text
+    try:
+        db = SessionLocal()
+        count = db.execute(text("SELECT COUNT(*) FROM cameras")).scalar()
+        db.close()
+        return {"status": "connected", "cameras_count": count, "database": "PostGIS Supabase"}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "detail": str(e)})
 
 # Mount static frontend and data directories
 frontend_path = _resolve_path("frontend")

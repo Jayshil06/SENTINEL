@@ -21,20 +21,33 @@ class Settings(BaseSettings):
             url = self.DATABASE_URL
             if url.startswith("postgres://"):
                 url = url.replace("postgres://", "postgresql://", 1)
+            # Automatic IPv4 pooler resolution for Supabase (prevents IPv6 unreachable errors on Vercel/Lambda)
+            import re
+            m = re.match(r'^(postgresql|postgres)://([^:]+):([^@]+)@db\.([a-zA-Z0-9_-]+)\.supabase\.co(?::\d+)?/(.*)$', url)
+            if m:
+                _, user, password, project_ref, path = m.groups()
+                db_part = path.split('?')[0] if path else 'postgres'
+                pooler_user = f"postgres.{project_ref}" if not user.startswith("postgres.") else user
+                region = "ap-northeast-1"
+                url = f"postgresql://{pooler_user}:{password}@aws-0-{region}.pooler.supabase.com:5432/{db_part}?sslmode=require"
+            elif "supabase" in url and "sslmode" not in url and "ssl" not in url:
+                sep = "&" if "?" in url else "?"
+                url = f"{url}{sep}sslmode=require"
             return url
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         
     # Asynchronous DB URL (for high-concurrency FastAPI asyncpg)
     @property
     def ASYNC_DATABASE_URI(self) -> str:
-        if self.DATABASE_URL:
-            url = self.DATABASE_URL
-            if url.startswith("postgres://"):
-                url = url.replace("postgres://", "postgresql+asyncpg://", 1)
-            elif url.startswith("postgresql://"):
-                url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
-            return url
-        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        url = self.SQLALCHEMY_DATABASE_URI
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        # asyncpg requires ssl= instead of sslmode=
+        if "sslmode=" in url:
+            url = url.replace("sslmode=", "ssl=")
+        return url
         
     # Redis Cache & Watchlist (supports cloud Upstash or local)
     REDIS_URL: Optional[str] = os.getenv("REDIS_URL")
