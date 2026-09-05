@@ -57,5 +57,49 @@
         localStorage.removeItem('sentinel_user');
       });
     });
+
+    // Setup Universal Mobile Navigation Drawer across all portals
+    const mobileNavBtn = document.getElementById('btn-mobile-nav');
+    const mobileNavDrawer = document.getElementById('mobile-nav-drawer');
+    const mobileNavClose = document.getElementById('btn-close-mobile-nav');
+    const mobileNavBackdrop = document.getElementById('mobile-nav-backdrop');
+
+    function openMobileNav() {
+      if (mobileNavDrawer) {
+        mobileNavDrawer.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+      }
+    }
+
+    function closeMobileNav() {
+      if (mobileNavDrawer) {
+        mobileNavDrawer.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      }
+    }
+
+    if (mobileNavBtn && mobileNavDrawer) {
+      mobileNavBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openMobileNav();
+      });
+    }
+    if (mobileNavClose) {
+      mobileNavClose.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeMobileNav();
+      });
+    }
+    if (mobileNavBackdrop) {
+      mobileNavBackdrop.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeMobileNav();
+      });
+    }
+
+    // Close on Escape key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMobileNav();
+    });
   });
 })();

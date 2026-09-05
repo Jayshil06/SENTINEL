@@ -147,7 +147,7 @@ function updateCameraListSidebar(features, query = '') {
   if (features.length === 0) {
     container.innerHTML = `
       <div class="text-center py-8 px-3 space-y-2.5">
-        <i class="fa-solid fa-camera-slash text-2xl text-gray-600 block"></i>
+        <i class="fa-solid fa-video-slash text-2xl text-gray-600 block"></i>
         <div class="text-xs text-gray-400 font-medium">No matching cameras found</div>
         <div class="text-[11px] text-gray-500">No cameras match "<span class="text-gray-300 font-mono">${escapeHtml(query)}</span>"</div>
         <button id="reset-cam-search-btn" class="mt-2 inline-flex items-center space-x-1 text-[11px] text-indigo-400 hover:text-indigo-300 bg-gray-800 hover:bg-gray-700 px-2.5 py-1 rounded border border-gray-700 transition">
@@ -247,7 +247,7 @@ if (toggleGapBtn) {
   } else {
     btn.classList.remove('bg-amber-600', 'text-white');
     btn.classList.add('bg-gray-800', 'text-amber-300');
-    btn.innerHTML = `<i class="fa-solid fa-radar"></i><span>Show Coverage & Blind Spots</span>`;
+    btn.innerHTML = `<i class="fa-solid fa-bullseye"></i><span>Show Coverage & Blind Spots</span>`;
     map.removeLayer(gapAnalysisLayer);
   }
 });
@@ -998,5 +998,9 @@ window.addEventListener('resize', () => {
 });
 
 // Initial boot
+if (window.innerWidth < 640 && routeHudBody && minimizeHudIcon) {
+  routeHudBody.classList.add('hidden');
+  minimizeHudIcon.className = 'fa-solid fa-chevron-down';
+}
 loadCameras();
 connectAlertWebSocket();
