@@ -134,11 +134,13 @@ class CameraHealthService:
                 city=city,
                 department_code=dept_code,
                 status=status,
+                health_status=status,
                 laplacian_variance=round(lap_var, 2),
                 mean_luminance=round(mean_lum, 2),
                 last_frame_seconds_ago=round(sec_ago, 1),
                 issues=issues,
-                recommendation=rec
+                recommendation=rec,
+                anti_tamper_recommendation=rec
             ))
 
         return diagnostics

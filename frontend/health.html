@@ -114,8 +114,8 @@
           <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Network Health</span>
           <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
         </div>
-        <div id="kpi-online-rate" class="text-2xl sm:text-3xl font-bold font-mono text-emerald-400 mt-2">91.3%</div>
-        <div class="text-[11px] text-emerald-500/80 mt-1">21 Active & Transmitting</div>
+        <div id="kpi-online-rate" class="text-2xl sm:text-3xl font-bold font-mono text-emerald-400 mt-2">--</div>
+        <div id="kpi-online-desc" class="text-[11px] text-emerald-500/80 mt-1">Calculating...</div>
       </div>
 
       <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl">
@@ -265,17 +265,72 @@
     let allDiagnostics = [];
     let currentFilter = 'all';
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function getStatus(d) {
+      return (d.status || d.health_status || 'ONLINE').toUpperCase();
+    }
+
+    function updateKpisAndTabs() {
+      const total = allDiagnostics.length;
+      const onlineCount = allDiagnostics.filter(d => getStatus(d) === 'ONLINE').length;
+      const blurCount = allDiagnostics.filter(d => getStatus(d) === 'DEGRADED_BLUR').length;
+      const occludedCount = allDiagnostics.filter(d => {
+        const s = getStatus(d);
+        return s === 'DEGRADED_OCCLUDED' || s === 'DEGRADED_GLARE';
+      }).length;
+
+      // Update KPI Counter Cards
+      const kpiTotal = document.getElementById('kpi-total');
+      if (kpiTotal) kpiTotal.textContent = total;
+
+      const kpiOnlineRate = document.getElementById('kpi-online-rate');
+      if (kpiOnlineRate) kpiOnlineRate.textContent = total > 0 ? ((onlineCount / total) * 100).toFixed(1) + '%' : '0.0%';
+
+      const kpiOnlineDesc = document.getElementById('kpi-online-desc');
+      if (kpiOnlineDesc) kpiOnlineDesc.textContent = `${onlineCount} Active & Transmitting`;
+
+      const kpiBlur = document.getElementById('kpi-blur');
+      if (kpiBlur) kpiBlur.textContent = blurCount;
+
+      const kpiOccluded = document.getElementById('kpi-occluded');
+      if (kpiOccluded) kpiOccluded.textContent = occludedCount;
+
+      // Update Filter Tabs with dynamic counts
+      const tabAll = document.getElementById('tab-all');
+      if (tabAll) tabAll.textContent = `All (${total})`;
+
+      const tabOnline = document.getElementById('tab-online');
+      if (tabOnline) tabOnline.textContent = `Online (${onlineCount})`;
+
+      const tabBlur = document.getElementById('tab-blur');
+      if (tabBlur) tabBlur.textContent = `Blur (${blurCount})`;
+
+      const tabOccluded = document.getElementById('tab-occluded');
+      if (tabOccluded) tabOccluded.textContent = `Occluded (${occludedCount})`;
+    }
+
     async function loadDiagnostics() {
       const grid = document.getElementById('camera-grid');
       grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><br>Running CV Diagnostics on Video Grid...</div>`;
 
       try {
         const res = await fetch('/api/v1/cameras/health-diagnostics');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         allDiagnostics = await res.json();
+        updateKpisAndTabs();
         renderCards();
       } catch (err) {
         console.error("Failed to load diagnostics:", err);
-        grid.innerHTML = `<div class="col-span-full text-center py-12 text-red-400">Failed to load diagnostics data.</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-red-400">Failed to load diagnostics data. Please verify session login.</div>`;
       }
     }
 
@@ -283,10 +338,10 @@
       currentFilter = status;
       ['all', 'online', 'blur', 'occluded'].forEach(id => {
         const btn = document.getElementById(`tab-${id}`);
-        if (btn) btn.className = 'px-3 py-1.5 rounded-lg text-gray-400 hover:text-white font-medium';
+        if (btn) btn.className = 'px-3 py-1.5 rounded-lg text-gray-400 hover:text-white font-medium transition cursor-pointer';
       });
       const activeBtn = document.getElementById(`tab-${status === 'all' ? 'all' : status.toLowerCase().replace('degraded_', '')}`);
-      if (activeBtn) activeBtn.className = 'px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium';
+      if (activeBtn) activeBtn.className = 'px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium shadow transition cursor-pointer';
       renderCards();
     }
 
@@ -296,46 +351,61 @@
 
       const filtered = currentFilter === 'all' 
         ? allDiagnostics 
-        : allDiagnostics.filter(d => d.health_status === currentFilter);
+        : allDiagnostics.filter(d => {
+            const s = getStatus(d);
+            if (currentFilter === 'DEGRADED_OCCLUDED') {
+              return s === 'DEGRADED_OCCLUDED' || s === 'DEGRADED_GLARE';
+            }
+            return s === currentFilter;
+          });
 
       if (filtered.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">No cameras in this category.</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500"><i class="fa-solid fa-circle-info text-2xl mb-2 text-gray-600 block"></i>No cameras in this category.</div>`;
         return;
       }
 
       filtered.forEach(cam => {
+        const camStatus = getStatus(cam);
         let statusBadge = '';
         let borderClass = 'border-gray-800';
-        if (cam.health_status === 'ONLINE') {
+
+        if (camStatus === 'ONLINE') {
           statusBadge = '<span class="bg-emerald-950 text-emerald-300 border border-emerald-800/60 px-2 py-0.5 rounded text-[10px] font-bold">ONLINE (SHARP)</span>';
-        } else if (cam.health_status === 'DEGRADED_BLUR') {
+        } else if (camStatus === 'DEGRADED_BLUR') {
           statusBadge = '<span class="bg-amber-950 text-amber-300 border border-amber-800/60 px-2 py-0.5 rounded text-[10px] font-bold">DEGRADED (BLUR)</span>';
           borderClass = 'border-amber-700/60 shadow-amber-950/40';
+        } else if (camStatus === 'OFFLINE') {
+          statusBadge = '<span class="bg-gray-800 text-gray-300 border border-gray-700 px-2 py-0.5 rounded text-[10px] font-bold">OFFLINE</span>';
+          borderClass = 'border-gray-700';
         } else {
           statusBadge = '<span class="bg-rose-950 text-rose-300 border border-rose-800/60 px-2 py-0.5 rounded text-[10px] font-bold">OCCLUDED / TAMPER</span>';
           borderClass = 'border-rose-700/60 shadow-rose-950/40';
         }
+
+        const focusVar = typeof cam.laplacian_variance === 'number' ? cam.laplacian_variance.toFixed(1) : cam.laplacian_variance;
+        const meanLum = typeof cam.mean_luminance === 'number' ? cam.mean_luminance.toFixed(1) : cam.mean_luminance;
+        const recommendation = cam.recommendation || cam.anti_tamper_recommendation || 'Operational.';
 
         const card = document.createElement('div');
         card.className = `bg-gray-900 border ${borderClass} rounded-2xl p-4 shadow-xl flex flex-col justify-between space-y-3`;
         card.innerHTML = `
           <div>
             <div class="flex items-center justify-between mb-1.5">
-              <span class="font-bold text-white font-mono text-xs">${cam.camera_id}</span>
+              <span class="font-bold text-white font-mono text-xs">${escapeHtml(cam.camera_id)}</span>
               ${statusBadge}
             </div>
-            <div class="font-bold text-sm text-gray-200">${cam.name}</div>
-            <div class="text-xs text-gray-400"><i class="fa-solid fa-location-dot text-gray-500 mr-1"></i>${cam.location_name}, ${cam.city}</div>
+            <div class="font-bold text-sm text-gray-200">${escapeHtml(cam.name)}</div>
+            <div class="text-xs text-gray-400"><i class="fa-solid fa-location-dot text-gray-500 mr-1"></i>${escapeHtml(cam.location_name)}, ${escapeHtml(cam.city)}</div>
           </div>
 
           <div class="bg-gray-950 rounded-xl p-3 border border-gray-800 space-y-2 text-xs font-mono">
             <div class="flex justify-between items-center">
               <span class="text-gray-400">Focus Variance:</span>
-              <span class="${cam.laplacian_variance < 100 ? 'text-amber-400 font-bold' : 'text-emerald-400'}">${cam.laplacian_variance.toFixed(1)}</span>
+              <span class="${cam.laplacian_variance < 100 ? 'text-amber-400 font-bold' : 'text-emerald-400'}">${focusVar}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-gray-400">Mean Luminance:</span>
-              <span class="${cam.mean_luminance < 30 || cam.mean_luminance > 220 ? 'text-rose-400 font-bold' : 'text-emerald-400'}">${cam.mean_luminance.toFixed(1)} / 255</span>
+              <span class="${cam.mean_luminance < 30 || cam.mean_luminance > 220 ? 'text-rose-400 font-bold' : 'text-emerald-400'}">${meanLum} / 255</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-gray-400">Stream Transport:</span>
@@ -345,7 +415,7 @@
 
           <div class="text-[11px] text-gray-400 bg-gray-800/40 p-2.5 rounded-lg border border-gray-800">
             <i class="fa-solid fa-screwdriver-wrench text-cyan-400 mr-1"></i>
-            <span>${cam.anti_tamper_recommendation}</span>
+            <span>${escapeHtml(recommendation)}</span>
           </div>
         `;
         grid.appendChild(card);

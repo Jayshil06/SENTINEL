@@ -40,8 +40,10 @@ class CameraHealthDiagnostic(BaseModel):
     city: str
     department_code: str
     status: str  # ONLINE, DEGRADED_BLUR, DEGRADED_OCCLUDED, OFFLINE
+    health_status: Optional[str] = None
     laplacian_variance: float
     mean_luminance: float
     last_frame_seconds_ago: float
     issues: List[str]
     recommendation: str
+    anti_tamper_recommendation: Optional[str] = None
